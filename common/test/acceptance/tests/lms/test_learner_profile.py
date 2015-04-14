@@ -19,8 +19,8 @@ class LearnerProfileTestMixin(EventsTestMixin):
     Mixin with helper methods for testing learner profile pages.
     """
 
-    PRIVACY_PUBLIC = 'all_users'
-    PRIVACY_PRIVATE = 'private'
+    PRIVACY_PUBLIC = u'all_users'
+    PRIVACY_PRIVATE = u'private'
 
     PUBLIC_PROFILE_FIELDS = ['username', 'country', 'language_proficiencies', 'bio']
     PRIVATE_PROFILE_FIELDS = ['username']
@@ -82,6 +82,26 @@ class LearnerProfileTestMixin(EventsTestMixin):
             str(birth_year)
         )
 
+    def verify_profile_page_is_public(self, profile_page, is_editable=True):
+        """
+        Verify that the profile page is currently public.
+        :return:
+        """
+        self.assertTrue(profile_page.privacy_field_visible)
+        self.assertEqual(profile_page.visible_fields, self.PUBLIC_PROFILE_FIELDS)
+        if is_editable:
+            self.assertEqual(profile_page.editable_fields, self.PUBLIC_PROFILE_EDITABLE_FIELDS)
+        else:
+            self.assertEqual(profile_page.editable_fields, [])
+
+    def verify_profile_page_is_private(self, profile_page):
+        """
+        Verify that the profile page is currently private.
+        :return:
+        """
+        self.assertTrue(profile_page.privacy_field_visible)
+        self.assertEqual(profile_page.visible_fields, self.PRIVATE_PROFILE_FIELDS)
+
     def verify_profile_page_view_event(self, profile_user_id, visibility=None):
         """
         Verifies that the correct view event was captured for the profile page.
@@ -89,10 +109,27 @@ class LearnerProfileTestMixin(EventsTestMixin):
         self.verify_events_of_type(
             u"edx.user.settings.viewed",
             [{
-                u"user_id": int(profile_user_id),
+                u"user_id": long(profile_user_id),
                 u"page": u"profile",
                 u"visibility": unicode(visibility),
             }]
+        )
+
+    def verify_user_preference_changed_event(self, username, user_id, setting, old_value=None, new_value=None):
+        """
+        Verifies that the correct user preference changed event was recorded.
+        """
+        self.verify_events_of_type(
+            u"edx.user.settings.changed",
+            [{
+                u"user_id": long(user_id),
+                u"table": u"user_api_userpreference",
+                u"setting": unicode(setting),
+                u"old": old_value,
+                u"new": new_value,
+                u"truncated": [],
+            },],
+            expected_referers=["/u/{username}".format(username=username)],
         )
 
 
@@ -110,6 +147,56 @@ class OwnLearnerProfilePageTest(LearnerProfileTestMixin, WebAppTest):
         self.assertTrue(profile_page.privacy_field_visible)
         self.assertEqual(profile_page.age_limit_message_present, message is not None)
         self.assertIn(message, profile_page.profile_forced_private_message)
+
+    def test_make_profile_public(self):
+        """
+        Scenario: Verify that the user can change their privacy.
+
+        Given that I am a registered user
+        And I visit my private profile page
+        And I set the profile visibility to public
+        Then a user preference changed event should be recorded
+        When I reload the page
+        Then the profile visibility should be shown as public
+        """
+        username, user_id = self.log_in_as_unique_user()
+        profile_page = self.visit_profile_page(username, privacy=self.PRIVACY_PRIVATE)
+        profile_page.privacy = self.PRIVACY_PUBLIC
+        self.verify_user_preference_changed_event(
+            username, user_id, "account_privacy",
+            old_value=None,
+            new_value=self.PRIVACY_PUBLIC,
+        )
+
+        # Reload the page and verify that the profile is now public
+        self.browser.refresh()
+        profile_page.wait_for_page()
+        self.verify_profile_page_is_public(profile_page)
+
+    def test_make_profile_private(self):
+        """
+        Scenario: Verify that the user can change their privacy.
+
+        Given that I am a registered user
+        And I visit my public profile page
+        And I set the profile visibility to private
+        Then a user preference changed event should be recorded
+        When I reload the page
+        Then the profile visibility should be shown as private
+        """
+        username, user_id = self.log_in_as_unique_user()
+        profile_page = self.visit_profile_page(username, privacy=self.PRIVACY_PUBLIC)
+        profile_page.privacy = self.PRIVACY_PRIVATE
+        self.verify_user_preference_changed_event(
+            username, user_id, "account_privacy",
+            old_value=self.PRIVACY_PUBLIC,
+            new_value=self.PRIVACY_PRIVATE,
+        )
+
+        # Reload the page and verify that the profile is now private
+        self.browser.refresh()
+        profile_page.wait_for_page()
+        self.verify_profile_page_is_private(profile_page)
 
     def test_dashboard_learner_profile_link(self):
         """
@@ -144,10 +231,7 @@ class OwnLearnerProfilePageTest(LearnerProfileTestMixin, WebAppTest):
         """
         username, user_id = self.log_in_as_unique_user()
         profile_page = self.visit_profile_page(username, privacy=self.PRIVACY_PRIVATE)
-
-        self.assertTrue(profile_page.privacy_field_visible)
-        self.assertEqual(profile_page.visible_fields, self.PRIVATE_PROFILE_FIELDS)
-
+        self.verify_profile_page_is_private(profile_page)
         self.verify_profile_page_view_event(user_id, visibility=self.PRIVACY_PRIVATE)
 
     def test_fields_on_my_public_profile(self):
@@ -164,12 +248,7 @@ class OwnLearnerProfilePageTest(LearnerProfileTestMixin, WebAppTest):
         """
         username, user_id = self.log_in_as_unique_user()
         profile_page = self.visit_profile_page(username, privacy=self.PRIVACY_PUBLIC)
-
-        self.assertTrue(profile_page.privacy_field_visible)
-        self.assertEqual(profile_page.visible_fields, self.PUBLIC_PROFILE_FIELDS)
-
-        self.assertEqual(profile_page.editable_fields, self.PUBLIC_PROFILE_EDITABLE_FIELDS)
-
+        self.verify_profile_page_is_public(profile_page)
         self.verify_profile_page_view_event(user_id, visibility=self.PRIVACY_PUBLIC)
 
     def _test_dropdown_field(self, profile_page, field_id, new_value, displayed_value, mode):
@@ -337,9 +416,7 @@ class DifferentUserLearnerProfilePageTest(LearnerProfileTestMixin, WebAppTest):
         different_username, different_user_id = self._initialize_different_user(privacy=self.PRIVACY_PRIVATE)
         self.log_in_as_unique_user()
         profile_page = self.visit_profile_page(different_username)
-
-        self.assertFalse(profile_page.privacy_field_visible)
-        self.assertEqual(profile_page.visible_fields, self.PRIVATE_PROFILE_FIELDS)
+        self.verify_profile_page_is_private(profile_page)
         self.verify_profile_page_view_event(different_user_id, visibility=self.PRIVACY_PRIVATE)
 
     def test_different_user_public_profile(self):
@@ -357,9 +434,7 @@ class DifferentUserLearnerProfilePageTest(LearnerProfileTestMixin, WebAppTest):
         self.log_in_as_unique_user()
         profile_page = self.visit_profile_page(different_username)
         profile_page.wait_for_public_fields()
-        self.assertFalse(profile_page.privacy_field_visible)
-        self.assertEqual(profile_page.visible_fields, self.PUBLIC_PROFILE_FIELDS)
-        self.assertEqual(profile_page.editable_fields, [])
+        self.verify_profile_page_is_public(profile_page, is_editable=False)
         self.verify_profile_page_view_event(different_user_id, visibility=self.PRIVACY_PUBLIC)
 
     def _initialize_different_user(self, privacy=None):
