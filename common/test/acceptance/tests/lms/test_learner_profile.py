@@ -164,7 +164,7 @@ class OwnLearnerProfilePageTest(LearnerProfileTestMixin, WebAppTest):
         profile_page.privacy = self.PRIVACY_PUBLIC
         self.verify_user_preference_changed_event(
             username, user_id, "account_privacy",
-            old_value=None,
+            old_value=None,    # Note: no old value as the default preference is private
             new_value=self.PRIVACY_PUBLIC,
         )
 
