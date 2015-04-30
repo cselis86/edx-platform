@@ -106,6 +106,8 @@ __all__ = ['course_info_handler', 'course_handler', 'course_listing',
            'settings_handler',
            'grading_handler',
            'advanced_settings_handler',
+           'xblock_manager_handler',
+           'xblock_manager_submit_handler',
            'course_notifications_handler',
            'textbooks_list_handler', 'textbooks_detail_handler',
            'group_configurations_list_handler', 'group_configurations_detail_handler']
@@ -1096,6 +1098,54 @@ def _modify_tabs_to_components(request, course_module):
 
     return tabs_changed
 
+@login_required
+@ensure_csrf_cookie
+@require_http_methods(("GET", "POST", "PUT"))
+@expect_json
+def xblock_manager_handler(request, course_key_string):
+    """
+    Course settings configuration
+    GET
+        html: get the page
+        json: get the model
+    PUT, POST
+        json: update the Course's settings. The payload is a json rep of the
+            metadata dicts.
+    """
+    course_key = CourseKey.from_string(course_key_string)
+    with modulestore().bulk_operations(course_key):
+        course_module = get_course_and_check_access(course_key, request.user)
+        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'GET':
+
+            return render_to_response('xblock_manager.html', {
+                'context_course': course_module,
+                
+                'xblock_manager_url': reverse_course_url('xblock_manager_handler', course_key)
+            })
+
+@login_required
+@require_http_methods(("GET", "POST", "PUT"))
+@expect_json
+def xblock_manager_submit_handler(request, course_key_string):
+    """
+    Course settings configuration
+    GET
+        html: get the page
+        json: get the model
+    PUT, POST
+        json: update the Course's settings. The payload is a json rep of the
+            metadata dicts.
+    """
+    course_key = CourseKey.from_string(course_key_string)
+    with modulestore().bulk_operations(course_key):
+        course_module = get_course_and_check_access(course_key, request.user)
+        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'GET':
+
+            return render_to_response('xblock_manager_submit.html', {
+                'context_course': course_module,
+                
+                'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
+            })
 
 @login_required
 @ensure_csrf_cookie
@@ -1148,60 +1198,6 @@ def advanced_settings_handler(request, course_key_string):
                         django.utils.html.escape(err.message),
                         content_type="text/plain"
                     )
-
-#xblock_manager_view
-@login_required
-@ensure_csrf_cookie
-@require_http_methods(("GET", "POST", "PUT"))
-@expect_json
-def xblock_manager_handler(request, course_key_string):
-    """
-    Course settings configuration
-    GET
-        html: get the page
-        json: get the model
-    PUT, POST
-        json: update the Course's settings. The payload is a json rep of the
-            metadata dicts.
-    """
-    course_key = CourseKey.from_string(course_key_string)
-    with modulestore().bulk_operations(course_key):
-        course_module = get_course_and_check_access(course_key, request.user)
-        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'GET':
-
-            return render_to_response('xblock_manager.html', {
-                'context_course': course_module,
-                'advanced_dict': json.dumps(CourseMetadata.fetch(course_module)),
-                'advanced_settings_url': reverse_course_url('advanced_settings_handler', course_key)
-            })
-        elif 'application/json' in request.META.get('HTTP_ACCEPT', ''):
-            if request.method == 'GET':
-                return JsonResponse(CourseMetadata.fetch(course_module))
-            else:
-                try:
-                    # do not process tabs unless they were modified according to course metadata
-                    filter_tabs = not _modify_tabs_to_components(request, course_module)
-
-                    # validate data formats and update
-                    is_valid, errors, updated_data = CourseMetadata.validate_and_update_from_json(
-                        course_module,
-                        request.json,
-                        filter_tabs=filter_tabs,
-                        user=request.user,
-                    )
-
-                    if is_valid:
-                        return JsonResponse(updated_data)
-                    else:
-                        return JsonResponseBadRequest(errors)
-
-                # Handle all errors that validation doesn't catch
-                except (TypeError, ValueError) as err:
-                    return HttpResponseBadRequest(
-                        django.utils.html.escape(err.message),
-                        content_type="text/plain"
-                    )
-
 
 class TextbookValidationError(Exception):
     "An error thrown when a textbook input is invalid"

@@ -1,4 +1,21 @@
-<form action=""
+<%inherit file="base.html" />
+
+<%namespace name='static' file='static_content.html'/>
+    
+<%!
+  from django.core.urlresolvers import reverse
+  from django.utils.translation import ugettext as _
+  from contentstore.context_processors import doc_url
+%>
+
+
+
+<%block name="content">
+    % if context_course:
+      <%
+            course_key = context_course.id
+      %>
+<form action="${reverse('contentstore.views.xblock_manager_submit_handler', kwargs={'course_key_string': unicode(course_key)})}"
 enctype="multipart/form-data" method="post">
 
 
@@ -10,3 +27,5 @@ Please specify a file :<br>
 <input type="submit" value="Send">
 </div>
 </form>
+    % endif
+</%block>

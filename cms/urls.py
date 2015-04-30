@@ -107,6 +107,7 @@ urlpatterns += patterns(
     url(r'^settings/grading/{}(/)?(?P<grader_index>\d+)?$'.format(settings.COURSE_KEY_PATTERN), 'grading_handler'),
     url(r'^settings/advanced/{}$'.format(settings.COURSE_KEY_PATTERN), 'advanced_settings_handler'),
     url(r'^settings/manager/{}$'.format(settings.COURSE_KEY_PATTERN), 'xblock_manager_handler'),
+    url(r'^settings/manager_submit/{}$'.format(settings.COURSE_KEY_PATTERN), 'xblock_manager_submit_handler'),
     url(r'^textbooks/{}$'.format(settings.COURSE_KEY_PATTERN), 'textbooks_list_handler'),
     url(r'^textbooks/{}/(?P<textbook_id>\d[^/]*)$'.format(settings.COURSE_KEY_PATTERN), 'textbooks_detail_handler'),
     url(r'^videos/{}$'.format(settings.COURSE_KEY_PATTERN), 'videos_handler'),
