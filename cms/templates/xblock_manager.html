@@ -16,12 +16,11 @@
             course_key = context_course.id
       %>
 <form action="${reverse('contentstore.views.xblock_manager_submit_handler', kwargs={'course_key_string': unicode(course_key)})}"
-enctype="multipart/form-data" method="post">
-
+enctype="multipart/form-data" method="post" action="/upload/">
 
 <p>
 Please specify a file :<br>
-<input type="file" name="datafile" size="40">
+<input type="file" name="datafile" size="40" id="Save">
 </p>
 <div>
 <input type="submit" value="Send">

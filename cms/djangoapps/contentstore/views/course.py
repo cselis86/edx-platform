@@ -1,6 +1,7 @@
 """
 Views related to operations on course objects
 """
+
 from django.shortcuts import redirect
 import json
 import random
@@ -18,6 +19,7 @@ from util.json_request import JsonResponse, JsonResponseBadRequest
 from util.date_utils import get_default_time_display
 from util.db import generate_int_id, MYSQL_MAX_INT
 from edxmako.shortcuts import render_to_response
+from django.views.decorators.csrf import csrf_exempt                                          
 
 from xmodule.course_module import DEFAULT_START_DATE
 from xmodule.error_module import ErrorDescriptor
@@ -1125,8 +1127,9 @@ def xblock_manager_handler(request, course_key_string):
 
 @login_required
 @require_http_methods(("GET", "POST", "PUT"))
-@expect_json
+@csrf_exempt                                                                                  
 def xblock_manager_submit_handler(request, course_key_string):
+
     """
     Course settings configuration
     GET
