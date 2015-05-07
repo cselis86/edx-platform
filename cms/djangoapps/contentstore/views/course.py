@@ -1,6 +1,7 @@
 """
 Views related to operations on course objects
 """
+import zipfile,os.path
 
 from django.shortcuts import redirect
 import json
@@ -1125,11 +1126,25 @@ def xblock_manager_handler(request, course_key_string):
                 'xblock_manager_url': reverse_course_url('xblock_manager_handler', course_key)
             })
 
+
+def unzip(source_filename, dest_dir):
+    with zipfile.ZipFile(source_filename) as zf:
+        for member in zf.infolist():
+            # Path traversal defense copied from
+            # http://hg.python.org/cpython/file/tip/Lib/http/server.py#l789
+            words = member.filename.split('/')
+            path = dest_dir
+            for word in words[:-1]:
+                drive, word = os.path.splitdrive(word)
+                head, word = os.path.split(word)
+                if word in (os.curdir, os.pardir, ''): continue
+                path = os.path.join(path, word)
+            zf.extract(member, path)
+            
 @login_required
 @require_http_methods(("GET", "POST", "PUT"))
 @csrf_exempt                                                                                  
 def xblock_manager_submit_handler(request, course_key_string):
-
     """
     Course settings configuration
     GET
@@ -1142,10 +1157,19 @@ def xblock_manager_submit_handler(request, course_key_string):
     course_key = CourseKey.from_string(course_key_string)
     with modulestore().bulk_operations(course_key):
         course_module = get_course_and_check_access(course_key, request.user)
-        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'GET':
+        if 'text/html' in request.META.get('HTTP_ACCEPT', '') and request.method == 'POST':
 
+            str = ''
+            for key in request.FILES:
+                str = str + key, 'corresponds to', request.FILES[key].name
+                # Unzip the file
+                with open('/tmp/test.zip', 'w') as file:
+                    file.write(request.FILES[key].read())
+                unzip('/tmp/spam.zip', '/tmp/test')
+                # End unzip
             return render_to_response('xblock_manager_submit.html', {
                 'context_course': course_module,
+                'vars': str,
                 
                 'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
             })
