@@ -2,6 +2,8 @@
 Views related to operations on course objects
 """
 import zipfile,os.path
+import os
+import subprocess
 
 from django.shortcuts import redirect
 import json
@@ -1166,16 +1168,30 @@ def xblock_manager_submit_handler(request, course_key_string):
                 with open('/tmp/test.zip', 'w') as file:
                     file.write(request.FILES[key].read())
                 if request.FILES[key].name.endswith(".zip"):
-                    unzip('/tmp/spam.zip', '/tmp/test')
-                #todo shell comands
-                # End unzip
-                return render_to_response('xblock_manager_submit_error.html', {
-                'context_course': course_module,
-                'vars': str,
-                
-                
-                'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
-            })
+                    unzip('/tmp/test.zip', '/tmp/test')
+                    #todo shell comands
+                    
+                    #proc = subprocess.Popen('/bin/ls /tmp', stdout=subprocess.PIPE)
+                    #retvalue = proc.stdout.read()
+                    
+                    retvalue = os.popen("/bin/ls /tmp").read()
+                    
+                    return render_to_response('xblock_manager_submit.html', 
+                                              {                                                                      
+                                               'context_course': course_module,
+                                               'retval':retvalue,
+                                               'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
+                                               }
+                                              )
+                    # End unzip
+                else :
+                    return render_to_response('xblock_manager_submit_error.html', 
+                                              {                                                                      
+                                               'context_course': course_module,
+                                               'vars': str,
+                                               'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
+                                               }
+                                              )
 
 @login_required
 @ensure_csrf_cookie
