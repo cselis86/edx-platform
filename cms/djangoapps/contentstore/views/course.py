@@ -1165,14 +1165,14 @@ def xblock_manager_submit_handler(request, course_key_string):
                 # Unzip the file
                 with open('/tmp/test.zip', 'w') as file:
                     file.write(request.FILES[key].read())
-                if request.FILE[key].name.endswith(".zip"):
+                if request.FILES[key].name.endswith(".zip"):
                     unzip('/tmp/spam.zip', '/tmp/test')
                 #todo shell comands
                 # End unzip
-            return render_to_response('xblock_manager_submit.html', {
+                return render_to_response('xblock_manager_submit_error.html', {
                 'context_course': course_module,
                 'vars': str,
-            ret
+                
                 
                 'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
             })
