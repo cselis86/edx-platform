@@ -1170,10 +1170,14 @@ def xblock_manager_submit_handler(request, course_key_string):
                 if request.FILES[key].name.endswith(".zip"):
                     unzip('/tmp/test.zip', '/tmp/test')
                     #todo shell comands
+
+                    course_module.advanced_modules.append("test")  # Sti thesi tou test tha bei h metavliti me to onoma tou xblock  
+                    modulestore().update_item(course_module, request.user.id) # Todo: Na dw an ginetai update mono sta advanced_modules kai oxi se olo to course module 
                     
                     #proc = subprocess.Popen('/bin/ls /tmp', stdout=subprocess.PIPE)
                     #retvalue = proc.stdout.read()
-                    
+                   
+
                     retvalue = os.popen("/bin/ls /tmp").read()
                     
                     return render_to_response('xblock_manager_submit.html', 
