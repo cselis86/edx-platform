@@ -1163,12 +1163,18 @@ def xblock_manager_submit_handler(request, course_key_string):
                     
                     os.popen("/bin/rm -fR /tmp/test").read()
                     os.popen("/usr/bin/unzip /tmp/test.zip -d /tmp/test").read()
+                    xblockname = os.popen("/bin/ls -d /tmp/test/*/*/").read()
+                    # edw epeksergazmaste to xblock name wste na kratisoume mono to teleuteo meros (px slideviewer)
                     retvalue = os.popen("/bin/bash /edx/app/edxapp/edx-platform/scripts/install-xblock.sh /tmp/test/*").read()
+
+                    #course_module.advanced_modules.append(xblockname)  # Sti thesi tou test tha bei h metavliti me to onoma tou xblock  
+                    #modulestore().update_item(course_module, request.user.id) # Todo: Na dw an ginetai update mono sta advanced_modules kai oxi se olo to course module 
                     
                     return render_to_response('xblock_manager_submit.html', 
                                               {                                                                      
                                                'context_course': course_module,
                                                'retval':retvalue,
+                                               'xblockname': xblockname,
                                                'xblock_manager_url': reverse_course_url('xblock_manager_submit_handler', course_key)
                                                }
                                               )
