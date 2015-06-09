@@ -4,6 +4,7 @@ Views related to operations on course objects
 import zipfile,os.path
 import os
 import subprocess
+from subprocess import call
 
 from django.shortcuts import redirect
 import json
@@ -1128,20 +1129,6 @@ def xblock_manager_handler(request, course_key_string):
                 'xblock_manager_url': reverse_course_url('xblock_manager_handler', course_key)
             })
 
-
-def unzip(source_filename, dest_dir):
-    with zipfile.ZipFile(source_filename) as zf:
-        for member in zf.infolist():
-            # Path traversal defense copied from
-            # http://hg.python.org/cpython/file/tip/Lib/http/server.py#l789
-            words = member.filename.split('/')
-            path = dest_dir
-            for word in words[:-1]:
-                drive, word = os.path.splitdrive(word)
-                head, word = os.path.split(word)
-                if word in (os.curdir, os.pardir, ''): continue
-                path = os.path.join(path, word)
-            zf.extract(member, path)
             
 @login_required
 @require_http_methods(("GET", "POST", "PUT"))
@@ -1168,13 +1155,15 @@ def xblock_manager_submit_handler(request, course_key_string):
                 with open('/tmp/test.zip', 'w') as file:
                     file.write(request.FILES[key].read())
                 if request.FILES[key].name.endswith(".zip"):
-                    unzip('/tmp/test.zip', '/tmp/test')
+                    #pernoume to prefix tou arxeiou
+                    filename = request.FILES[key].name.split(".")[0]
                     #todo shell comands
-                    
                     #proc = subprocess.Popen('/bin/ls /tmp', stdout=subprocess.PIPE)
                     #retvalue = proc.stdout.read()
                     
-                    retvalue = os.popen("/bin/ls /tmp").read()
+                    os.popen("/bin/rm -fR /tmp/test").read()
+                    os.popen("/usr/bin/unzip /tmp/test.zip -d /tmp/test").read()
+                    retvalue = os.popen("/bin/bash /edx/app/edxapp/edx-platform/scripts/install-xblock.sh /tmp/test/*").read()
                     
                     return render_to_response('xblock_manager_submit.html', 
                                               {                                                                      
