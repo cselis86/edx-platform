@@ -15,8 +15,24 @@
       <%
             course_key = context_course.id
       %>
+  <div class="wrapper-mast wrapper">
+    <header class="mast has-actions has-subtitle">
+      <h1 class="page-header">
+        <small class="subtitle">${_("Xblock Manager")}</small>
+        <span class="sr">&gt; </span>${_("Xblock Install Manager")}
+      </h1>
+    </header>
+  </div>
+
+  <div class="wrapper-content wrapper">
+    <section class="content"> 
+    <article class="content-primary" role="main">
+      <div class="introduction">
+        
 <form action="${reverse('contentstore.views.xblock_manager_submit_handler', kwargs={'course_key_string': unicode(course_key)})}"
 enctype="multipart/form-data" method="post" action="/upload/">
+
+
 
 <p>
 Please specify a file :<br>
@@ -26,5 +42,9 @@ Please specify a file :<br>
 <input type="submit" value="Send">
 </div>
 </form>
+</div>
+</article>
+</section>
+</div>
     % endif
 </%block>
