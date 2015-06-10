@@ -15,9 +15,27 @@
       <%
             course_key = context_course.id
       %>
+
+<div class="wrapper-mast wrapper">
+    <header class="mast has-actions has-subtitle">
+      <h1 class="page-header">
+        <small class="subtitle">${_("Xblock Manager")}</small>
+        <span class="sr">&gt; </span>${_("Xblock Install Manager")}
+      </h1>
+    </header>
+  </div>
+
+  <div class="wrapper-content wrapper">
+    <section class="content"> 
+    <article class="content-primary" role="main">
+      <div class="introduction">
       
       <p>
 Please select a zip file to unzip!<br>
-
+</p>
+</div>
+</article>
+</section>
+</div>
 % endif
 </%block>
