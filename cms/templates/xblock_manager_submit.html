@@ -1,3 +1,25 @@
+<%inherit file="base.html" />
+
+<%namespace name='static' file='static_content.html'/>
+    
+<%!
+  from django.core.urlresolvers import reverse
+  from django.utils.translation import ugettext as _
+  from contentstore.context_processors import doc_url
+%>
+
+
+
+<%block name="content">
+    % if context_course:
+      <%
+            course_key = context_course.id
+      %>
+      
+      <p>
 ${retval}
 
-${xblockname}
+${namefolder}
+
+% endif
+</%block>
