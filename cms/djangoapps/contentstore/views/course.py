@@ -1168,8 +1168,9 @@ def xblock_manager_submit_handler(request, course_key_string):
                     # edw epeksergazmaste to xblock name wste na kratisoume mono to teleuteo meros (px slideviewer)
                     retvalue = os.popen("/bin/bash /edx/app/edxapp/edx-platform/scripts/install-xblock.sh /tmp/test/*").read()
                     namefolder = basename(dirname(xblockname)) #Find the last dirname of a path
-                    course_module.advanced_modules.append(namefolder)  # Sti thesi tou test tha bei h metavliti me to onoma tou xblock  
-                    modulestore().update_item(course_module, request.user.id) # Todo: Na dw an ginetai update mono sta advanced_modules kai oxi se olo to course module 
+                    if namefolder not in course_module.advanced_modules: #If the namefolder doesn't already exist in advanced_modules list
+                        course_module.advanced_modules.append(namefolder)  # Sti thesi tou test tha bei h metavliti me to onoma tou xblock  
+                        modulestore().update_item(course_module, request.user.id) # Todo: Na dw an ginetai update mono sta advanced_modules kai oxi se olo to course module 
                     
                     return render_to_response('xblock_manager_submit.html', 
                                               {                                                                      
